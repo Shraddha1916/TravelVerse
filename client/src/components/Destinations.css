@@ -1,0 +1,144 @@
+.destinations{
+    padding:90px 8%;
+    background:#f8fafc;
+}
+
+.destinations h2{
+    text-align:center;
+    font-size:44px;
+    color:#111827;
+    margin-bottom:15px;
+}
+
+.destination-text{
+    text-align:center;
+    color:#6b7280;
+    font-size:18px;
+    margin-bottom:55px;
+}
+
+.destination-container{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+    gap:35px;
+}
+
+.destination-card{
+    background:#fff;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 12px 30px rgba(0,0,0,.08);
+    transition:.35s;
+}
+
+.destination-card:hover{
+    transform:translateY(-10px);
+    box-shadow:0 20px 45px rgba(0,0,0,.15);
+}
+
+.image-box{
+    position:relative;
+    overflow:hidden;
+}
+
+.image-box img{
+    width:100%;
+    height:210px;
+    object-fit:cover;
+    transition:.5s;
+}
+
+.destination-card:hover img{
+    transform:scale(1.08);
+}
+
+.price-tag{
+    position:absolute;
+    top:18px;
+    right:18px;
+    background:#2563eb;
+    color:#fff;
+    padding:8px 16px;
+    border-radius:50px;
+    font-size:14px;
+    font-weight:600;
+}
+
+.card-content{
+    padding:25px;
+}
+
+.card-content h3{
+    font-size:28px;
+    color:#111827;
+    margin-bottom:10px;
+}
+
+.location{
+    color:#2563eb;
+    font-weight:600;
+    margin-bottom:15px;
+}
+
+.description{
+    color:#6b7280;
+    line-height:1.5;
+    margin-bottom:15px;
+    min-height:45px;
+    font-size:15px;
+}
+
+.bottom-row{
+    display:flex;
+    justify-content:space-between;
+    margin:15px 0;
+    color:#374151;
+    font-weight:600;
+    font-size:15px;
+}
+
+.card-content button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:#2563eb;
+    color:#fff;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.card-content button:hover{
+    background:#1d4ed8;
+}
+
+@media(max-width:768px){
+
+.destinations{
+padding:70px 20px;
+}
+
+.destinations h2{
+font-size:34px;
+}
+
+.destination-container{
+grid-template-columns:1fr;
+}
+
+.image-box img{
+height:220px;
+}
+
+.card-content{
+    padding:18px;
+}
+
+.card-content h3{
+    font-size:22px;
+    color:#111827;
+    margin-bottom:8px;
+}
+
+}

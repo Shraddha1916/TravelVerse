@@ -1,0 +1,28 @@
+.destinations-page {
+  padding: 80px 50px;
+  text-align: center;
+}
+
+.destinations-page h1 {
+  font-size: 40px;
+  color: #1e3a8a;
+}
+.destinations-page p {
+  font-size: 18px;
+  color: #666;
+  margin-top: 15px;
+}
+.back-btn {
+  margin-top: 25px;
+  padding: 12px 24px;
+  background-color: #0ea5e9;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.back-btn:hover {
+  background-color: #0284c7;
+}
