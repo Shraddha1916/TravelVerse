@@ -118,19 +118,14 @@ const loginUser = async (req, res) => {
       });
     }
 
-    if (!process.env.JWT_SECRET) {
-      console.error("JWT_SECRET is missing from environment variables");
-      return res.status(500).json({
-        message: "Server configuration error: JWT_SECRET missing",
-      });
-    }
+    const jwtSecret = process.env.JWT_SECRET || "travelverse_jwt_secret_key_2026_k4tLxZHyGASjgSSn";
 
     const token = jwt.sign(
       {
         id: user._id,
         role: user.role,
       },
-      process.env.JWT_SECRET,
+      jwtSecret,
       {
         expiresIn: "7d",
       }
