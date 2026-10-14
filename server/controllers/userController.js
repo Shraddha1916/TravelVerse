@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const mongoose = require("mongoose");
 const User = require("../models/User");
 
 // Register User
@@ -7,19 +8,51 @@ const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    const userExists = await User.findOne({ email });
+    // Validate required fields
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        message: "Please provide all required fields: name, email, and password",
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return res.status(400).json({
+        message: "Please provide a valid email address",
+      });
+    }
+
+    // Validate password length
+    if (typeof password !== "string" || password.length < 6) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters long",
+      });
+    }
+
+    // Check database connection state
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        message: "Database connection unavailable. Please check MongoDB Atlas connection.",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Check if user already exists
+    const userExists = await User.findOne({ email: normalizedEmail });
 
     if (userExists) {
       return res.status(400).json({
-        message: "User already exists",
+        message: "User already exists with this email",
       });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: normalizedEmail,
       password: hashedPassword,
       role: "user",
     });
@@ -34,10 +67,17 @@ const registerUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log(error);
+    console.error("Register Error:", error.message);
+
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: "User already exists with this email",
+      });
+    }
 
     res.status(500).json({
-      message: "Server Error",
+      message: "Server Error during registration",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -47,7 +87,22 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Please provide both email and password",
+      });
+    }
+
+    // Check database connection state
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        message: "Database connection unavailable. Please check MongoDB Atlas connection.",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
       return res.status(400).json({
@@ -60,6 +115,13 @@ const loginUser = async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({
         message: "Invalid Email or Password",
+      });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET is missing from environment variables");
+      return res.status(500).json({
+        message: "Server configuration error: JWT_SECRET missing",
       });
     }
 
@@ -85,10 +147,11 @@ const loginUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log(error);
+    console.error("Login Error:", error.message);
 
     res.status(500).json({
-      message: "Server Error",
+      message: "Server Error during login",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -96,11 +159,23 @@ const loginUser = async (req, res) => {
 // Get Profile
 const getProfile = async (req, res) => {
   try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        message: "Not authorized",
+      });
+    }
+
     const user = await User.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
 
     res.json(user);
   } catch (error) {
-    console.log(error);
+    console.error("Profile Error:", error.message);
 
     res.status(500).json({
       message: "Server Error",
@@ -115,7 +190,7 @@ const getAllUsers = async (req, res) => {
 
     res.status(200).json(users);
   } catch (error) {
-    console.log(error);
+    console.error("GetAllUsers Error:", error.message);
 
     res.status(500).json({
       message: "Server Error",

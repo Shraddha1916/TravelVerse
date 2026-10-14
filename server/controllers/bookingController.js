@@ -12,6 +12,19 @@ const createBooking = async (req, res) => {
       travelDate,
     } = req.body;
 
+    if (!trip || !fullName || !phone || !persons || !travelDate) {
+      return res.status(400).json({
+        message: "Please fill in all booking details",
+      });
+    }
+
+    const personCount = Number(persons);
+    if (isNaN(personCount) || personCount < 1) {
+      return res.status(400).json({
+        message: "Number of persons must be at least 1",
+      });
+    }
+
     const selectedTrip = await Trip.findById(trip);
 
     if (!selectedTrip) {
@@ -20,14 +33,14 @@ const createBooking = async (req, res) => {
       });
     }
 
-    const totalPrice = selectedTrip.price * Number(persons);
+    const totalPrice = selectedTrip.price * personCount;
 
     const booking = await Booking.create({
       user: req.user.id,
       trip: trip,
-      fullName: fullName,
-      phone: phone,
-      persons: Number(persons),
+      fullName: fullName.trim(),
+      phone: phone.trim(),
+      persons: personCount,
       travelDate: travelDate,
       totalPrice: totalPrice,
     });
@@ -37,10 +50,10 @@ const createBooking = async (req, res) => {
       booking,
     });
   } catch (error) {
-    console.log("BOOKING ERROR:", error);
+    console.error("BOOKING ERROR:", error.message);
 
     res.status(500).json({
-      message: "Server Error",
+      message: "Server Error while processing booking",
     });
   }
 };

@@ -1,25 +1,40 @@
 const jwt = require("jsonwebtoken");
 
 const protect = (req, res, next) => {
-  let token = req.headers.authorization;
+  let authHeader = req.headers.authorization;
 
-  if (!token) {
+  if (!authHeader) {
     return res.status(401).json({
       message: "Access Denied. No Token Provided",
     });
   }
 
+  let token;
+  if (authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1];
+  } else {
+    token = authHeader;
+  }
+
+  if (!token || token.trim() === "") {
+    return res.status(401).json({
+      message: "Access Denied. Malformed Token",
+    });
+  }
+
   try {
-    token = token.split(" ")[1];
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     req.user = decoded;
-
     next();
   } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({
+        message: "Token expired. Please login again",
+      });
+    }
+
     res.status(401).json({
-      message: "Invalid Token",
+      message: "Invalid Token. Authorization denied",
     });
   }
 };

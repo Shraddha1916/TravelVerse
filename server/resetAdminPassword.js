@@ -1,7 +1,15 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
+const dns = require("dns");
 const User = require("./models/User");
+
+// Public DNS servers for reliable Atlas SRV resolution
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch (e) {
+  // ignore
+}
 
 dotenv.config();
 
@@ -14,20 +22,18 @@ const resetPassword = async () => {
     const user = await User.findOneAndUpdate(
       { email: "shraddha02@gmail.com" },
       {
+        name: "Admin Shraddha",
+        email: "shraddha02@gmail.com",
         password: hashedPassword,
         role: "admin",
       },
-      { new: true }
+      { returnDocument: "after", upsert: true, setDefaultsOnInsert: true }
     );
 
-    if (!user) {
-      console.log("Admin user not found");
-      process.exit(1);
-    }
-
-    console.log("Admin password reset successfully");
+    console.log("Admin user saved/updated successfully!");
     console.log("Email: shraddha02@gmail.com");
     console.log("Password: Admin@123");
+    console.log("Role: admin");
 
     await mongoose.connection.close();
   } catch (error) {
