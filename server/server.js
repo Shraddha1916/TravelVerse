@@ -4,7 +4,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 require("dotenv").config();
 
-const connectDB = require("./config/db");
+const { connectDB, getLastDbError } = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 const tripRoutes = require("./routes/tripRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
@@ -62,6 +62,7 @@ app.get("/api/health", (req, res) => {
     status: "ok",
     server: "running",
     database: stateMap[dbState] || "unknown",
+    dbError: getLastDbError(),
     timestamp: new Date().toISOString(),
   });
 });

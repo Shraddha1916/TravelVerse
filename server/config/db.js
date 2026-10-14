@@ -8,11 +8,14 @@ try {
   console.warn("⚠️ Could not set custom DNS servers, using system default:", dnsErr.message);
 }
 
+let lastDbError = null;
+
 const connectDB = async () => {
   const uri = process.env.MONGODB_URI;
 
   if (!uri) {
-    console.error("❌ MongoDB Connection Error: MONGODB_URI is not set in environment variables.");
+    lastDbError = "MONGODB_URI is not set in environment variables.";
+    console.error("❌ MongoDB Connection Error:", lastDbError);
     return false;
   }
 
@@ -23,22 +26,12 @@ const connectDB = async () => {
     const conn = await mongoose.connect(uri, {
       serverSelectionTimeoutMS: 5000,
     });
-
+    lastDbError = null;
     console.log(`✅ MongoDB Connected Successfully: ${conn.connection.host}/${conn.connection.name}`);
     return true;
   } catch (error) {
-    console.error(`❌ MongoDB Connection Error (${sanitizedUri}):`);
-
-    if (error.message && error.message.includes("bad auth")) {
-      console.error("   Reason: Authentication failed. Verify database username and password in MongoDB Atlas (Database Access).");
-    } else if (error.message && (error.message.includes("ECONNREFUSED") || error.message.includes("querySrv"))) {
-      console.error("   Reason: DNS SRV lookup failed for the Atlas cluster hostname.");
-    } else if (error.name === "MongooseServerSelectionError") {
-      console.error("   Reason: Could not reach cluster servers. Verify that your IP address is whitelisted in MongoDB Atlas (Network Access -> Allow 0.0.0.0/0).");
-    } else {
-      console.error(`   Details: ${error.message}`);
-    }
-
+    lastDbError = error.message;
+    console.error(`❌ MongoDB Connection Error (${sanitizedUri}):`, error.message);
     return false;
   }
 };
@@ -57,4 +50,7 @@ setInterval(async () => {
   }
 }, 15000);
 
-module.exports = connectDB;
+module.exports = {
+  connectDB,
+  getLastDbError: () => lastDbError,
+};
