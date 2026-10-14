@@ -1,7 +1,10 @@
 import axios from "axios";
 
+// Deployed Render backend URL
+const DEFAULT_API_URL = "https://travelverse-backend-mur8.onrender.com/api";
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || DEFAULT_API_URL,
 });
 
 // Automatically attach Bearer token if present in localStorage

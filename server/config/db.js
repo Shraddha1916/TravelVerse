@@ -43,4 +43,18 @@ const connectDB = async () => {
   }
 };
 
+// Retry connecting automatically every 15 seconds if disconnected
+setInterval(async () => {
+  if (mongoose.connection.readyState === 0 && process.env.MONGODB_URI) {
+    try {
+      await mongoose.connect(process.env.MONGODB_URI, {
+        serverSelectionTimeoutMS: 5000,
+      });
+      console.log("✅ MongoDB Auto-Reconnected Successfully!");
+    } catch (e) {
+      // Keep retrying quietly
+    }
+  }
+}, 15000);
+
 module.exports = connectDB;
