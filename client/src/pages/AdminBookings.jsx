@@ -3,15 +3,38 @@ import api from "../services/api";
 
 function AdminBookings() {
   const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchBookings();
+    let isMounted = true;
+
+    api
+      .get("/bookings")
+      .then((res) => {
+        if (isMounted) {
+          setBookings(Array.isArray(res.data) ? res.data : []);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch bookings:", err);
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const fetchBookings = async () => {
-    const res = await api.get("/bookings");
-    setBookings(res.data);
-  };
+  if (loading) {
+    return (
+      <section className="destinations-page">
+        <h2>Loading Bookings...</h2>
+      </section>
+    );
+  }
 
   return (
     <section className="destinations-page">

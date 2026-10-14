@@ -3,15 +3,30 @@ import api from "../services/api";
 
 function AdminDestinations() {
   const [trips, setTrips] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchTrips();
-  }, []);
+    let isMounted = true;
 
-  const fetchTrips = async () => {
-    const res = await api.get("/trips");
-    setTrips(res.data);
-  };
+    api
+      .get("/trips")
+      .then((res) => {
+        if (isMounted) {
+          setTrips(Array.isArray(res.data) ? res.data : []);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch trips:", err);
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const deleteTrip = async (id) => {
     const confirmDelete = window.confirm(
@@ -26,6 +41,21 @@ function AdminDestinations() {
 
     setTrips(trips.filter((trip) => trip._id !== id));
   };
+
+  if (loading) {
+    return (
+      <section
+        style={{
+          maxWidth: "1000px",
+          margin: "40px auto",
+          padding: "20px",
+          textAlign: "center",
+        }}
+      >
+        <h2>Loading Destinations...</h2>
+      </section>
+    );
+  }
 
   return (
     <section

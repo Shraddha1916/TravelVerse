@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "./Admin.css";
 
 function Admin() {
+  const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState("dashboard");
 
   const [trip, setTrip] = useState({
@@ -32,24 +34,16 @@ function Admin() {
   const fetchBookings = async () => {
     try {
       const response = await api.get("/bookings");
-      setBookings(response.data);
+      setBookings(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const fetchDestinations = async () => {
-  try {
-    const response = await api.get("/trips");
-    setDestinations(response.data);
-  } catch (error) {
-    console.log(error);
-  }
-};
   const fetchUsers = async () => {
     try {
       const response = await api.get("/users");
-      setUsers(response.data);
+      setUsers(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.log(error);
     }
@@ -58,8 +52,9 @@ function Admin() {
   const fetchContacts = async () => {
     try {
       const response = await api.get("/contacts");
-      setContacts(response.data);
-      setContactCount(response.data.length);
+      const list = Array.isArray(response.data) ? response.data : [];
+      setContacts(list);
+      setContactCount(list.length);
     } catch (error) {
       console.log(error);
     }
@@ -68,7 +63,7 @@ function Admin() {
   const fetchTrips = async () => {
     try {
       const response = await api.get("/trips");
-      setDestinations(response.data);
+      setDestinations(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.log(error);
     }
@@ -154,12 +149,45 @@ function Admin() {
     });
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
   useEffect(() => {
-    fetchBookings();
-    fetchUsers();
-    fetchTrips();
-    fetchContacts();
-  }, []);
+    const userStr = localStorage.getItem("user");
+    if (!userStr) {
+      navigate("/login");
+      return;
+    }
+    try {
+      const user = JSON.parse(userStr);
+      if (user.role !== "admin") {
+        alert("Access denied. Admin rights required.");
+        navigate("/");
+        return;
+      }
+    } catch {
+      navigate("/login");
+      return;
+    }
+
+    const loadAdminData = async () => {
+      try {
+        await Promise.allSettled([
+          fetchBookings(),
+          fetchUsers(),
+          fetchTrips(),
+          fetchContacts(),
+        ]);
+      } catch (err) {
+        console.error("Admin data load error:", err);
+      }
+    };
+
+    loadAdminData();
+  }, [navigate]);
 
   return (
     <div className="admin-layout">
@@ -212,7 +240,7 @@ function Admin() {
 
         </nav>
 
-        <button className="admin-logout">
+        <button className="admin-logout" onClick={handleLogout}>
           🚪 Logout
         </button>
 

@@ -5,8 +5,10 @@ import "./Destinations.css";
 
 function Destinations({ showTitle = true }) {
   const [destinations, setDestinations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const getImage = (placeName) => {
+    if (!placeName) return "/images/manali.jpg";
     switch (placeName.toLowerCase()) {
       case "manali":
         return "/images/manali.jpg";
@@ -30,13 +32,35 @@ function Destinations({ showTitle = true }) {
   };
 
   useEffect(() => {
-    const fetchTrips = async () => {
-      const res = await api.get("/trips");
-      setDestinations(res.data);
-    };
+    let isMounted = true;
 
-    fetchTrips();
+    api
+      .get("/trips")
+      .then((res) => {
+        if (isMounted) {
+          setDestinations(Array.isArray(res.data) ? res.data : []);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load destinations:", err);
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  if (loading) {
+    return (
+      <section className="destinations" style={{ textAlign: "center", padding: "40px" }}>
+        <h2>Loading Destinations...</h2>
+      </section>
+    );
+  }
 
   return (
     <section className="destinations">
@@ -79,7 +103,7 @@ function Destinations({ showTitle = true }) {
               </p>
 
               <p className="description">
-                {trip.description.substring(0,90)}...
+                {trip.description ? trip.description.substring(0, 90) : ""}...
               </p>
 
               <div className="bottom-row">

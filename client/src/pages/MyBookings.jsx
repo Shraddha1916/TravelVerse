@@ -5,18 +5,46 @@ import { useNavigate } from "react-router-dom";
 function MyBookings() {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchBookings();
-  }, []);
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) {
+      navigate("/login");
+      return;
+    }
 
-  const fetchBookings = async () => {
-    const user = JSON.parse(localStorage.getItem("user"));
+    let user;
+    try {
+      user = JSON.parse(storedUser);
+    } catch {
+      navigate("/login");
+      return;
+    }
 
-    const response = await api.get(`/bookings/user/${user._id}`);
+    if (!user?._id) {
+      navigate("/login");
+      return;
+    }
 
-    setBookings(response.data);
-  };
+    let isMounted = true;
+    api
+      .get(`/bookings/user/${user._id}`)
+      .then((response) => {
+        if (isMounted) {
+          setBookings(Array.isArray(response.data) ? response.data : []);
+          setLoading(false);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to fetch bookings:", error);
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [navigate]);
 
   const cancelBooking = async (id) => {
     const confirmDelete = window.confirm(
@@ -25,12 +53,29 @@ function MyBookings() {
 
     if (!confirmDelete) return;
 
-    await api.delete(`/bookings/${id}`);
-
-    alert("Booking Cancelled Successfully");
-
-    setBookings(bookings.filter((booking) => booking._id !== id));
+    try {
+      await api.delete(`/bookings/${id}`);
+      alert("Booking Cancelled Successfully");
+      setBookings((prev) => prev.filter((booking) => booking._id !== id));
+    } catch (error) {
+      alert(error.response?.data?.message || "Failed to cancel booking");
+    }
   };
+
+  if (loading) {
+    return (
+      <section
+        style={{
+          maxWidth: "1100px",
+          margin: "50px auto",
+          padding: "20px",
+          textAlign: "center",
+        }}
+      >
+        <h2>Loading Your Bookings...</h2>
+      </section>
+    );
+  }
 
   return (
     <section
